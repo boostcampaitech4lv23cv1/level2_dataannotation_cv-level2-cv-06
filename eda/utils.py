@@ -3,6 +3,15 @@ import json
 import numpy as np
 import streamlit as st
 from pathlib import Path
+import os
+
+HOME_PATH = os.path.expanduser('~')
+DATA_DIR_PATH = os.path.join(HOME_PATH, 'input/data')
+
+
+def get_data_dirs():
+    return [i for i in os.listdir(DATA_DIR_PATH) if not i.startswith(".")]
+
 
 
 def set_image(path):

@@ -75,13 +75,7 @@ def view_image(df: pd.DataFrame):
 st.set_page_config(layout="wide")
 st.title("Data visualization")
 
-
-dataset = (
-    "ICDAR17_Korean",
-    "ICDAR2015",
-    "test",
-    "ICDAR17",
-)  # , "ICDAR17_Korean_test")  select list of dataset should be folder name of dataset including ufo and images
+dataset = get_data_dirs() # select list of dataset should be folder name of dataset including ufo and images
 data = st.selectbox("Dataset Selection", dataset)
 path = os.path.join("../../input/data", data, "ufo/train.json")
 
