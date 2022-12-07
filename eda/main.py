@@ -7,14 +7,11 @@ import sys
 from utils import *
 
 
-def view_dist(data_dict):
-    image_df = data_dict['image_df']
-
-    with st.container():
-        col1, col2 = st.columns(2)
-        col1.header("Testset")
-        col2.header("Trainset")
-    
+def view_dist(data_dict: dict):
+    """
+    data_dict: processed annotation json file
+    render distributions
+    """
     dist_list = [
         'image_size_dist',
         'image_tag_dist',
@@ -26,52 +23,16 @@ def view_dist(data_dict):
         'ver_aspect_ratio_dist',
         ]
 
+    with st.container():
+        col1, col2 = st.columns(2)
+        col1.header("Testset")
+        col2.header("Trainset")
+
     for dist_name in dist_list:
         with st.container():
             col1, col2 = st.columns(2)
             col1.image(globals()['testset_dist_imshow'](dist_name + '.png'))
-            # col1.image(getattr(dist_name, 'testset_dist_imshow'))
             col2.pyplot(globals()[dist_name](data_dict))
-    # with st.container():
-    #     col1, col2 = st.columns(2)
-    #     col1.image(testset_dist_imshow('image_size_dist.png'))
-    #     col2.pyplot(image_size_dist(image_df))
-
-    # with st.container():
-    #     col1, col2 = st.columns(2)
-    #     col1.image(testset_dist_imshow('image_tag_dist.png'))
-    #     col2.pyplot(image_tag_dist(image_df))
-
-    # with st.container():
-    #     col1, col2 = st.columns(2)
-    #     col1.image(testset_dist_imshow('word_tag_dist.png'))
-    #     col2.pyplot(word_tag_dist(data_dict['word_tags']))
-
-    # with st.container():
-    #     col1, col2 = st.columns(2)
-    #     col1.image(testset_dist_imshow('orientation_dist.png'))
-    #     col2.pyplot(orientation_dist(data_dict['word_df']))    
-
-    # with st.container():
-    #     col1, col2 = st.columns(2)
-    #     col1.image(testset_dist_imshow('language_dist.png'))
-    #     col2.pyplot(language_dist(data_dict['word_df']))
-
-    # with st.container():
-    #     col1, col2 = st.columns(2)
-    #     col1.image(testset_dist_imshow('bbox_size_dist.png'))
-    #     col2.pyplot(bbox_size_dist(data_dict['word_df']))
-
-    # with st.container():
-    #     col1, col2 = st.columns(2)
-    #     col1.image(testset_dist_imshow('hor_aspect_ratio_dist.png'))
-    #     col2.pyplot(hor_aspect_ratio_dist(data_dict['hor_aspect_ratio']))
-
-    # with st.container():
-    #     col1, col2 = st.columns(2)
-    #     col1.image(testset_dist_imshow('ver_aspect_ratio_dist.png'))
-    #     col2.pyplot(ver_aspect_ratio_dist(data_dict['ver_aspect_ratio']))
-
 
 
 def draw_image(group, img_path):
