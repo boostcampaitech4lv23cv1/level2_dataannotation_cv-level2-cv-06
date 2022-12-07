@@ -399,7 +399,7 @@ class SceneTextDataset(Dataset):
         image, vertices = resize_img(image, vertices, self.image_size)
         image, vertices = adjust_height(image, vertices)
         image, vertices = rotate_img(image, vertices)
-        image, vertices = crop_img(image, vertices, labels, self.crop_size)
+        # image, vertices = crop_img(image, vertices, labels, self.crop_size)
 
         if image.mode != "RGB":
             image = image.convert("RGB")
