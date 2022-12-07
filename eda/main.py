@@ -7,13 +7,80 @@ import sys
 from utils import *
 
 
+def view_dist(data_dict):
+    image_df = data_dict['image_df']
+
+    with st.container():
+        col1, col2 = st.columns(2)
+        col1.header("Testset")
+        col2.header("Trainset")
+    
+    dist_list = [
+        'image_size_dist',
+        'image_tag_dist',
+        'word_tag_dist',
+        'orientation_dist',
+        'language_dist',
+        'bbox_size_dist',
+        'hor_aspect_ratio_dist',
+        'ver_aspect_ratio_dist',
+        ]
+
+    for dist_name in dist_list:
+        with st.container():
+            col1, col2 = st.columns(2)
+            col1.image(globals()['testset_dist_imshow'](dist_name + '.png'))
+            # col1.image(getattr(dist_name, 'testset_dist_imshow'))
+            col2.pyplot(globals()[dist_name](data_dict))
+    # with st.container():
+    #     col1, col2 = st.columns(2)
+    #     col1.image(testset_dist_imshow('image_size_dist.png'))
+    #     col2.pyplot(image_size_dist(image_df))
+
+    # with st.container():
+    #     col1, col2 = st.columns(2)
+    #     col1.image(testset_dist_imshow('image_tag_dist.png'))
+    #     col2.pyplot(image_tag_dist(image_df))
+
+    # with st.container():
+    #     col1, col2 = st.columns(2)
+    #     col1.image(testset_dist_imshow('word_tag_dist.png'))
+    #     col2.pyplot(word_tag_dist(data_dict['word_tags']))
+
+    # with st.container():
+    #     col1, col2 = st.columns(2)
+    #     col1.image(testset_dist_imshow('orientation_dist.png'))
+    #     col2.pyplot(orientation_dist(data_dict['word_df']))    
+
+    # with st.container():
+    #     col1, col2 = st.columns(2)
+    #     col1.image(testset_dist_imshow('language_dist.png'))
+    #     col2.pyplot(language_dist(data_dict['word_df']))
+
+    # with st.container():
+    #     col1, col2 = st.columns(2)
+    #     col1.image(testset_dist_imshow('bbox_size_dist.png'))
+    #     col2.pyplot(bbox_size_dist(data_dict['word_df']))
+
+    # with st.container():
+    #     col1, col2 = st.columns(2)
+    #     col1.image(testset_dist_imshow('hor_aspect_ratio_dist.png'))
+    #     col2.pyplot(hor_aspect_ratio_dist(data_dict['hor_aspect_ratio']))
+
+    # with st.container():
+    #     col1, col2 = st.columns(2)
+    #     col1.image(testset_dist_imshow('ver_aspect_ratio_dist.png'))
+    #     col2.pyplot(ver_aspect_ratio_dist(data_dict['ver_aspect_ratio']))
+
+
+
 def draw_image(group, img_path):
     """
     group: grouped df by image id
     img_path: image folder path
     return cv2 image with annotation
     """
-    image = cv2.imread(os.path.join("../../input/data", data, "images", img_path))
+    image = cv2.imread(os.path.join(DATA_DIR_PATH, data, "images", img_path))
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     bboxes = group.get_group(img_path)
 
@@ -77,12 +144,12 @@ st.title("Data visualization")
 
 dataset = get_data_dirs() # select list of dataset should be folder name of dataset including ufo and images
 data = st.selectbox("Dataset Selection", dataset)
-path = os.path.join("../../input/data", data, "ufo/train.json")
+path = os.path.join(DATA_DIR_PATH, data, "ufo/train.json")
 
 if (
     "test" == data
 ):  # validation set with crawling data (made because of difference with file name(output.json/train.json))
-    path = os.path.join("../../input/data", data, "ufo/output.json")
+    path = os.path.join(DATA_DIR_PATH, data, "ufo/output.json")
 """
 #view trainset annotation after validation (ICDAR17_Korean_test)
 elif "test" in data: # validation set wi
@@ -91,14 +158,17 @@ elif "test" in data: # validation set wi
 """
 
 df = set_image(path)
-(vz_tab, tmp2) = st.tabs(
+(vz_tab, dist_tab) = st.tabs(
     [
-        "tmp1",
-        "tmp2",
+        "Image Viewer",
+        "Data Distribution",
     ]
 )
 with vz_tab:
     view_image(df)
+with dist_tab:
+    data_dict = load_ann(path)
+    view_dist(data_dict)
 
 
 # 실행 명령어 streamlit run main.py  --server.fileWatcherType none --server.port 30002
