@@ -7,6 +7,7 @@ import os
 import cv2
 import seaborn as sns
 import matplotlib.pyplot as plt
+from stqdm import stqdm
 
 HOME_PATH = os.path.expanduser("~")
 DATA_DIR_PATH = os.path.join(HOME_PATH, "input/data")
@@ -186,7 +187,7 @@ def load_ann(ann_path):
     orientation = []
     word_tags = []
 
-    for image_key, image_value in data["images"].items():
+    for image_key, image_value in stqdm(data["images"].items()):
         df["image"].append(image_key)
         img_w = image_value["img_w"]
         img_h = image_value["img_h"]
@@ -199,6 +200,12 @@ def load_ann(ann_path):
         word_ann = image_value["words"]
         count_ill = 0
         for word in word_ann.values():
+            if "word_tags" in word:
+                wt = "word_tags"
+            elif "tags" in word:
+                wt = "tags"
+            else:
+                print('what?')
             if word["illegibility"] == False:
                 orientation.append(word["orientation"])
                 orientation = [v for v in orientation]
@@ -207,9 +214,10 @@ def load_ann(ann_path):
                 languages = [
                     ["None"] if v is None else v for v in languages
                 ]  # our data does not inlcude multi-language words
-                if word["word_tags"] != None:
-                    word_tags.extend(word["word_tags"][:])
-                elif word["word_tags"] == None:
+                
+                if word[wt] != None:
+                    word_tags.extend(word[wt][:])
+                elif word[wt] == None:
                     word_tags.append("None")
                 poly = np.int32(word["points"])
                 size = rectify_poly(poly, word["orientation"], img_w, img_h)
