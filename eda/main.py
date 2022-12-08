@@ -7,126 +7,46 @@ import sys
 from utils import *
 
 
-def view_dist(data_dict: dict):
-    """
-    data_dict: processed annotation json file
-    render distributions
-    """
-    dist_list = [
-        'image_size_dist',
-        'image_tag_dist',
-        'word_tag_dist',
-        'orientation_dist',
-        'language_dist',
-        'bbox_size_dist',
-        'hor_aspect_ratio_dist',
-        'ver_aspect_ratio_dist',
-        ]
-
-    with st.container():
-        col1, col2 = st.columns(2)
-        col1.header("Testset")
-        col2.header("Trainset")
-
-    for dist_name in dist_list:
-        with st.container():
-            col1, col2 = st.columns(2)
-            col1.image(globals()['testset_dist_imshow'](dist_name + '.png'))
-            col2.pyplot(globals()[dist_name](data_dict))
-
-
-def draw_image(group, img_path):
-    """
-    group: grouped df by image id
-    img_path: image folder path
-    return cv2 image with annotation
-    """
-    image = cv2.imread(os.path.join(DATA_DIR_PATH, data, "images", img_path))
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    bboxes = group.get_group(img_path)
-
-    for _, bbox in bboxes.iterrows():
-        pts = np.array(
-            [
-                [bbox.x1, bbox.y1],
-                [bbox.x2, bbox.y2],
-                [bbox.x3, bbox.y3],
-                [bbox.x4, bbox.y4],
-            ],
-            np.int32,
-        )
-        x_min = min(bbox.x1, bbox.x2, bbox.x3, bbox.x4)
-        y_min = min(bbox.y1, bbox.y2, bbox.y3, bbox.y4)
-        image = cv2.polylines(image, [pts], True, [0, 0, 0])
-    return image
-
-
-def view_image(df: pd.DataFrame):
-    """
-    selectbox: select image and show
-    next button: show image by session count
-
-    session count
-    selectbox: after select item make session count as image number (for next button)
-
-    session key
-    To store prev image/ select image after nextbutton image is not updated without key
-    """
-    if "counter" not in st.session_state:
-        st.session_state.counter = 0
-    group = df.groupby("image_ids")
-    img_paths = group.groups.keys()
-    img_path = st.selectbox("choose image", img_paths)
-    if st.session_state.counter == 0 or st.session_state["key"] != str(img_path):
-        st.session_state.key = img_path
-        image = draw_image(group, img_path)
-        show = st.image(image, width=700)
-        paths = [*img_paths]
-        st.session_state.counter = paths.index(img_path)
-
-    def show_photo(photo):
-        """
-        if select box has value clear select box image after next button
-        """
-        if st.session_state.counter == 1:
-            show.empty()
-        paths = [*img_paths]
-        photo = paths[photo]
-        image = draw_image(group, photo)
-        st.image(image, width=700)
-
-    st.session_state.counter += 1
-    photo = st.session_state.counter
-    next = st.button("next", on_click=show_photo, args=([photo]))
-
-
 st.set_page_config(layout="wide")
 st.title("Data visualization")
 
-dataset = get_data_dirs() # select list of dataset should be folder name of dataset including ufo and images
-data = st.selectbox("Dataset Selection", dataset)
-path = os.path.join(DATA_DIR_PATH, data, "ufo/train.json")
+# select list of dataset should be folder name of dataset including ufo and images
+datasets = get_data_dirs()
+dataset_path = st.selectbox("Dataset Selection", datasets)
+path = os.path.join(DATA_DIR_PATH, dataset_path, "ufo/train.json")
 
-if (
-    "test" == data
-):  # validation set with crawling data (made because of difference with file name(output.json/train.json))
-    path = os.path.join(DATA_DIR_PATH, data, "ufo/output.json")
-"""
-#view trainset annotation after validation (ICDAR17_Korean_test)
-elif "test" in data: # validation set wi
-    data = data.split("_test")[0]
-    path = os.path.join("../../input/data", data, "ufo/output.json")
-"""
+# validation set with crawling data (made because of difference with file name(output.json/train.json))
+if "test" == dataset_path:
+    path = os.path.join(DATA_DIR_PATH, dataset_path, "ufo/output.json")
+# """
+# view trainset annotation after validation (ICDAR17_Korean_test)
+# elif "test" in data: # validation set wi
+#     data = data.split("_test")[0]
+#     path = os.path.join("../../input/data", data, "ufo/output.json")
+# """
 
+set_session()
 df = set_image(path)
+
+st.write(
+    "<style>div.row-widget.stRadio > div{flex-direction:row;justify-content: center;} </style>",
+    unsafe_allow_html=True,
+)
+
+st.write(
+    "<style>div.st-bf{flex-direction:column;} div.st-ag{padding-left:2px;}</style>",
+    unsafe_allow_html=True,
+)
+
 (vz_tab, dist_tab) = st.tabs(
     [
         "Image Viewer",
         "Data Distribution",
     ]
 )
+
 with vz_tab:
-    view_image(df)
+    view_image(df, dataset_path)
 with dist_tab:
     data_dict = load_ann(path)
     view_dist(data_dict)
