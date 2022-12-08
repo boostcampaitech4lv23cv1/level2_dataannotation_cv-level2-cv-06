@@ -9,7 +9,8 @@ DATA_DIR_PATH = os.path.join(HOME_PATH, "input/data")
 
 def main(args):
     images_path = os.path.join(args.dataset_path, 'images')
-    output_path = os.path.join(args.dataset_path, 'ufo', 'train.json')
+    output_dir_path = os.path.join(args.dataset_path, 'ufo')
+    output_path = os.path.join(output_dir_path, 'train.json')
     file_data = dict()
     file_data["images"] = dict()
 
@@ -67,6 +68,12 @@ def main(args):
             i+=1
             
         file_data["images"][output_name] = temp
+
+    try:
+        if not os.path.exists(output_dir_path):
+            os.makedirs(output_dir_path)
+    except OSError:
+        print("Error: Failed to create the directory.")
 
     # save converted ufo format
     with open(output_path, 'w') as f:  
