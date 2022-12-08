@@ -47,9 +47,9 @@ st.write(
 
 with vz_tab:
     view_image(df, dataset_path)
-with dist_tab:
-    data_dict = load_ann(path)
-    view_dist(data_dict)
+# with dist_tab:
+#     data_dict = load_ann(path)
+#     view_dist(data_dict)
 
 
 # 실행 명령어 streamlit run main.py  --server.fileWatcherType none --server.port 30002

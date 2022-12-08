@@ -21,6 +21,7 @@ def get_data_dirs():
     return [i for i in os.listdir(DATA_DIR_PATH) if not i.startswith(".")]
 
 
+@st.cache(allow_output_mutation=True)
 def set_image(path):
     """
     path: path of ufo file
@@ -205,7 +206,7 @@ def load_ann(ann_path):
             elif "tags" in word:
                 wt = "tags"
             else:
-                print('what?')
+                print("what?")
             if word["illegibility"] == False:
                 orientation.append(word["orientation"])
                 orientation = [v for v in orientation]
@@ -214,7 +215,7 @@ def load_ann(ann_path):
                 languages = [
                     ["None"] if v is None else v for v in languages
                 ]  # our data does not inlcude multi-language words
-                
+
                 if word[wt] != None:
                     word_tags.extend(word[wt][:])
                 elif word[wt] == None:
@@ -498,7 +499,7 @@ def draw_image(group, dataset_path: str, img_path: str):
         )
         # x_min = min(bbox.x1, bbox.x2, bbox.x3, bbox.x4)
         # y_min = min(bbox.y1, bbox.y2, bbox.y3, bbox.y4)
-        image = cv2.polylines(image, [pts], True, [255, 0, 0])
+        image = cv2.polylines(image, [pts], True, [0, 0, 0], thickness=3)
     return image
 
 
@@ -520,7 +521,19 @@ def view_image(df: pd.DataFrame, dataset_path: str):
             format_func=lambda x: f"{x[1]}",
         )
 
-        st.write(st.session_state.page)
+        st.text(f"현재 페이지: {st.session_state.page}")
+
+        page_2_move = st.text_input("page to move")
+
+        try:
+            p = int(page_2_move)
+            if p >= len(pages):
+                st.text(f"페이지 범위를 벗어났습니다 | 페이지 범위: 0~{len(pages)-1}")
+            else:
+                st.button("페이지 이동", on_click=change_page, args=[p])
+        except:
+            st.text("숫자를 입력해주세요")
+
     with col1:
         if st.session_state.page == 0:
             prev_flag = True
