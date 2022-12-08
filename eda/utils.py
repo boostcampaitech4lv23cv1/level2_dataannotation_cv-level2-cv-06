@@ -29,8 +29,8 @@ def set_image(path):
     """
     df = pd.DataFrame()
     image_ids = []
-    x1, x2, x3, x4, y1, y2, y3, y4 = [], [], [], [], [], [], [], []
-
+    # x1, x2, x3, x4, y1, y2, y3, y4 = [], [], [], [], [], [], [], []
+    points = []
     with Path(path).open(encoding="utf8") as f:
         data = json.load(f)
 
@@ -38,25 +38,11 @@ def set_image(path):
         word_ann = image_value["words"]
         for word in word_ann.values():
             image_ids.append(image_key)
-            x1.append(word["points"][0][0])
-            y1.append(word["points"][0][1])
-            x2.append(word["points"][1][0])
-            y2.append(word["points"][1][1])
-            x3.append(word["points"][2][0])
-            y3.append(word["points"][2][1])
-            x4.append(word["points"][3][0])
-            y4.append(word["points"][3][1])
-    (
-        df["image_ids"],
-        df["x1"],
-        df["x2"],
-        df["x3"],
-        df["x4"],
-        df["y1"],
-        df["y2"],
-        df["y3"],
-        df["y4"],
-    ) = (image_ids, x1, x2, x3, x4, y1, y2, y3, y4)
+            img_pts = []
+            for point in word["points"]:
+                img_pts.append(point)
+            points.append(img_pts)
+    (df["image_ids"], df["points"]) = (image_ids, points)
 
     return df
 
@@ -489,16 +475,9 @@ def draw_image(group, dataset_path: str, img_path: str):
 
     for _, bbox in bboxes.iterrows():
         pts = np.array(
-            [
-                [bbox.x1, bbox.y1],
-                [bbox.x2, bbox.y2],
-                [bbox.x3, bbox.y3],
-                [bbox.x4, bbox.y4],
-            ],
+            bbox.points,
             np.int32,
         )
-        # x_min = min(bbox.x1, bbox.x2, bbox.x3, bbox.x4)
-        # y_min = min(bbox.y1, bbox.y2, bbox.y3, bbox.y4)
         image = cv2.polylines(image, [pts], True, [0, 0, 0], thickness=3)
     return image
 
