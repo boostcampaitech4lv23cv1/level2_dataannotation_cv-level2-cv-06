@@ -45,7 +45,7 @@ class MLT15Dataset(Dataset):
 
             label_path = osp.join(label_dir, 'gt_{}.txt'.format(sample_id))
             assert label_path in label_paths
-            words_info = self.parse_label_file(label_path)
+            words_info, extra_info = self.parse_label_file(label_path)
             sample_ids.append(sample_id)
             samples_info[sample_id] = dict(image_path=image_path, label_path=label_path,
                                         words_info=words_info)
@@ -95,13 +95,14 @@ class MLT15Dataset(Dataset):
 
             illegibility = transcription == '###'
             orientation = 'Horizontal'
+            language = "en"
             words_info[word_idx] = dict(
-                points=points, transcription=transcription, 
+                points=points, transcription=transcription, language = [language],
                 illegibility=illegibility, orientation=orientation, word_tags=None
             )
+            languages.add(language)
 
-
-        return words_info
+        return words_info, dict(languages=languages)
 
 
 def main():
