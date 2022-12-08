@@ -21,6 +21,7 @@ def get_data_dirs():
     return [i for i in os.listdir(DATA_DIR_PATH) if not i.startswith(".")]
 
 
+@st.cache(allow_output_mutation=True)
 def set_image(path):
     """
     path: path of ufo file
