@@ -131,13 +131,12 @@ def cal_error(vertices):
     """
     x_min, x_max, y_min, y_max = get_boundary(vertices)
     x1, y1, x2, y2, x3, y3, x4, y4 = vertices
-    err = (
+    return (
         cal_distance(x1, y1, x_min, y_min)
         + cal_distance(x2, y2, x_max, y_min)
         + cal_distance(x3, y3, x_max, y_max)
         + cal_distance(x4, y4, x_min, y_max)
     )
-    return err
 
 
 def find_min_rect_angle(vertices):
@@ -147,8 +146,7 @@ def find_min_rect_angle(vertices):
     Output:
         the best angle <radian measure>
     """
-    angle_interval = 1
-    angle_list = list(range(-90, 90, angle_interval))
+    angle_list = list(range(-90, 90))
     area_list = []
     for theta in angle_list:
         rotated = rotate_vertices(vertices, theta / 180 * math.pi)
@@ -332,10 +330,12 @@ def rotate_img(img, vertices, angle_range=10):
 
 def generate_roi_mask(image, vertices, labels):
     mask = np.ones(image.shape[:2], dtype=np.float32)
-    ignored_polys = []
-    for vertice, label in zip(vertices, labels):
-        if label == 0:
-            ignored_polys.append(np.around(vertice.reshape((4, 2))).astype(np.int32))
+    ignored_polys = [
+        np.around(vertice.reshape((4, 2))).astype(np.int32)
+        for vertice, label in zip(vertices, labels)
+        if label == 0
+    ]
+
     cv2.fillPoly(mask, ignored_polys, 0)
     return mask
 
@@ -366,7 +366,7 @@ class SceneTextDataset(Dataset):
         color_jitter=True,
         normalize=True,
     ):
-        with open(osp.join(root_dir, "ufo/{}.json".format(split)), "r") as f:
+        with open(osp.join(root_dir, f"ufo/{split}.json"), "r") as f:
             anno = json.load(f)
 
         self.anno = anno
