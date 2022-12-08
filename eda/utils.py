@@ -601,6 +601,7 @@ def split_page(path_lst: list):
             tmp = []
         tmp.append(ele)
         cnt += 1
+    page_lst.append(tmp)
     return page_lst
 
 
