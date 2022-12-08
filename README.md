@@ -24,3 +24,9 @@
 >  "feat: get model hyper parameter"
 >  "세부 내용 추가"
 >  ```
+
+# Dataset information
+> [ICDAR 2017](https://rrc.cvc.uab.es/?ch=8)
+> - 로그인 후 Multi-script text detection 데이터 다운로드
+> - image 파일은 input/data/ICDAR17/images 폴더에 저장
+> - ufo 파일은 input/data/ICDAR17/ufo 폴더에 저장
