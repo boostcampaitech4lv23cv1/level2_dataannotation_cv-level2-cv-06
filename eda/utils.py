@@ -594,7 +594,7 @@ def split_page(path_lst: list):
     page_lst = []
     tmp = []
     cnt = 0
-    for ele in path_lst:
+    for ele in sorted(path_lst):
         if cnt > 9:
             page_lst.append(tmp)
             cnt = 0
