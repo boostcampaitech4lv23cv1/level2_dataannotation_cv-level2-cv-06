@@ -359,19 +359,27 @@ def filter_vertices(vertices, labels, ignore_under=0, drop_under=0):
 class SceneTextDataset(Dataset):
     def __init__(
         self,
-        root_dir,
+        root_dirs,
         split="train",
         image_size=1024,
         crop_size=512,
         color_jitter=True,
         normalize=True,
     ):
-        with open(osp.join(root_dir, f"ufo/{split}.json"), "r") as f:
-            anno = json.load(f)
+        annos = {"images": {}}
+        image_fnames = []
+        for root_dir in root_dirs:
+            if not osp.exists(root_dir):
+                raise ValueError(f"root_dir {root_dir} does not exist")
+            with open(osp.join(root_dir, f"ufo/{split}.json"), "r") as f:
+                anno = json.load(f)
+                image_fnames.extend(
+                    osp.join(root_dir, "images", i) for i in anno["images"].keys()
+                )
+                annos["images"].update(anno["images"])
 
-        self.anno = anno
-        self.image_fnames = sorted(anno["images"].keys())
-        self.image_dir = osp.join(root_dir, "images")
+        self.anno = annos
+        self.image_fnames = sorted(image_fnames)
 
         self.image_size, self.crop_size = image_size, crop_size
         self.color_jitter, self.normalize = color_jitter, normalize
@@ -381,10 +389,11 @@ class SceneTextDataset(Dataset):
 
     def __getitem__(self, idx):
         image_fname = self.image_fnames[idx]
-        image_fpath = osp.join(self.image_dir, image_fname)
 
         vertices, labels = [], []
-        for word_info in self.anno["images"][image_fname]["words"].values():
+        for word_info in self.anno["images"][image_fname.split("/")[-1]][
+            "words"
+        ].values():
             vertices.append(np.array(word_info["points"]).flatten())
             labels.append(int(not word_info["illegibility"]))
         vertices, labels = np.array(vertices, dtype=np.float32), np.array(
@@ -395,7 +404,7 @@ class SceneTextDataset(Dataset):
             vertices, labels, ignore_under=10, drop_under=1
         )
 
-        image = Image.open(image_fpath)
+        image = Image.open(image_fname)
         image, vertices = resize_img(image, vertices, self.image_size)
         image, vertices = adjust_height(image, vertices)
         image, vertices = rotate_img(image, vertices)

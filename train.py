@@ -18,17 +18,13 @@ import torch.distributed as dist
 import builtins
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data.distributed import DistributedSampler as DistributedSampler
+import yaml
 
 
 def parse_args():
     parser = ArgumentParser()
 
     # Conventional args
-    parser.add_argument(
-        "--data_dir",
-        type=str,
-        default=os.environ.get("SM_CHANNEL_TRAIN", "../input/data/ICDAR19_Korean"),
-    )
     parser.add_argument(
         "--model_dir",
         type=str,
@@ -69,15 +65,30 @@ def parse_args():
     )
     args = parser.parse_args()
 
+    load_files(args)
+
     if args.input_size % 32 != 0:
         raise ValueError("`input_size` must be a multiple of 32")
 
     return args
 
 
+def load_files(args: dict):
+    """load files from yaml file that contains the data files you want to load
+
+    Args:
+        args (dict): parser dicts
+    """
+    with open("file.yaml") as f:
+        files = yaml.load(f, Loader=yaml.FullLoader)
+        args.__dict__.update(files)
+
+
 def do_training(**args):
+    data_path = "../input/data/"
+    files = [data_path + i for i in args["files"]]
     dataset = SceneTextDataset(
-        args["data_dir"],
+        files,
         split="train",
         image_size=args["image_size"],
         crop_size=args["input_size"],
@@ -85,7 +96,9 @@ def do_training(**args):
     dataset = EASTDataset(dataset)
     num_batches = math.ceil(len(dataset) / args["batch_size"])
 
-    train_sampler = DistributedSampler(dataset, shuffle=True)
+    train_sampler = (
+        DistributedSampler(dataset, shuffle=True) if args["distributed"] else None
+    )
     train_loader = DataLoader(
         dataset,
         batch_size=args["batch_size"],
@@ -99,14 +112,14 @@ def do_training(**args):
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = EAST()
-    if args.distributed:
+    if args["distributed"]:
         # For multiprocessing distributed, DistributedDataParallel constructor
         # should always set the single device scope, otherwise,
         # DistributedDataParallel will use all available devices.
-        if args.gpu is not None:
-            torch.cuda.set_device(args.gpu)
-            model.cuda(args.gpu)
-            model = DDP(model, device_ids=[args.gpu])
+        if args["gpu"] is not None:
+            torch.cuda.set_device(args["gpu"])
+            model.cuda(args["gpu"])
+            model = DDP(model, device_ids=[args["gpu"]])
         else:
             model.to(device)
             model = DDP(model)
@@ -122,7 +135,7 @@ def do_training(**args):
     model.train()
     for epoch in range(args["max_epoch"]):
         epoch_loss, epoch_start = 0, time.time()
-        if args.distributed:
+        if args["distributed"]:
             train_loader.sampler.set_epoch(epoch)
 
         with tqdm(total=num_batches) as pbar:
