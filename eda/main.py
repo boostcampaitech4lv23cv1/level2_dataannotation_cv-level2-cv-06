@@ -1,10 +1,7 @@
-import streamlit as st
-import cv2
 import os
-import pandas as pd
 from typing import List
-import sys
 from utils import *
+from view import *
 
 
 st.set_page_config(layout="wide")
@@ -12,12 +9,13 @@ st.title("Data visualization")
 
 # select list of dataset should be folder name of dataset including ufo and images
 datasets = get_data_dirs()
-dataset_path = st.selectbox("Dataset Selection", datasets)
-path = os.path.join(DATA_DIR_PATH, dataset_path, "ufo/train.json")
+dataset_path = os.path.join(DATA_DIR_PATH, st.selectbox("Dataset Selection", datasets))
 
 # validation set with crawling data (made because of difference with file name(output.json/train.json))
 if "test" == dataset_path:
-    path = os.path.join(DATA_DIR_PATH, dataset_path, "ufo/output.json")
+    ann_path = os.path.join(DATA_DIR_PATH, dataset_path, "ufo/output.json")
+else:
+    ann_path = os.path.join(DATA_DIR_PATH, dataset_path, "ufo/train.json")
 # """
 # view trainset annotation after validation (ICDAR17_Korean_test)
 # elif "test" in data: # validation set wi
@@ -26,7 +24,7 @@ if "test" == dataset_path:
 # """
 
 set_session()
-df = set_image(path)
+df = set_image(ann_path)
 
 st.write(
     "<style>div.row-widget.stRadio > div{flex-direction:row;justify-content: center;} </style>",
@@ -47,9 +45,9 @@ st.write(
 
 with vz_tab:
     view_image(df, dataset_path)
-# with dist_tab:
-#     data_dict = load_ann(path)
-#     view_dist(data_dict)
+with dist_tab:
+    data_dict = load_ann(dataset_path)
+    view_dist(data_dict)
 
 
 # 실행 명령어 streamlit run main.py  --server.fileWatcherType none --server.port 30002
