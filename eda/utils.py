@@ -31,6 +31,7 @@ def set_image(path):
     image_ids = []
     # x1, x2, x3, x4, y1, y2, y3, y4 = [], [], [], [], [], [], [], []
     points = []
+    illegal = []
     with Path(path).open(encoding="utf8") as f:
         data = json.load(f)
 
@@ -39,10 +40,11 @@ def set_image(path):
         for word in word_ann.values():
             image_ids.append(image_key)
             img_pts = []
+            illegal.append(word["illegibility"])
             for point in word["points"]:
                 img_pts.append(point)
             points.append(img_pts)
-    (df["image_ids"], df["points"]) = (image_ids, points)
+    (df["image_ids"], df["points"], df["illegal"]) = (image_ids, points, illegal)
 
     return df
 
@@ -478,7 +480,10 @@ def draw_image(group, dataset_path: str, img_path: str):
             bbox.points,
             np.int32,
         )
-        image = cv2.polylines(image, [pts], True, [0, 0, 0], thickness=3)
+        if bbox.illegal == False:
+            image = cv2.polylines(image, [pts], True, [0, 0, 0], thickness=3)
+        else:
+            image = cv2.polylines(image, [pts], True, [255, 255, 0], thickness=3)
     return image
 
 
