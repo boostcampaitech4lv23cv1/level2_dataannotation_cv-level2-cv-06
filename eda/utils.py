@@ -258,7 +258,6 @@ def calc_ann(dataset_path):
 def load_ann(dataset_path):
     df_path = os.path.join(dataset_path, "analysis", "df.pkl")
     if os.path.isfile(df_path):
-        print('ho')
         return load_pkl(df_path)
     else:
         return calc_ann(dataset_path)

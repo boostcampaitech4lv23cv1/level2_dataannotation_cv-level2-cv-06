@@ -46,7 +46,10 @@ st.write(
 with vz_tab:
     view_image(df, dataset_path)
 with dist_tab:
+    with st.sidebar:
+        1
     data_dict = load_ann(dataset_path)
+    # view_dist_chkbox(data_dict)
     view_dist(data_dict)
 
 
