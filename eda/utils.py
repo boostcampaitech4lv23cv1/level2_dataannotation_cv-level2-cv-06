@@ -8,6 +8,7 @@ from stqdm import stqdm
 from plots import *
 import pickle
 
+
 def get_data_dirs():
     """
     return data directory list
@@ -134,11 +135,12 @@ def rectify_poly(poly, direction, img_w, img_h):
 
 
 def save_pkl(data, path):
-    with open(path, 'wb') as f:
+    with open(path, "wb") as f:
         pickle.dump(data, f)
 
+
 def load_pkl(path):
-    with open(path, 'rb') as f:
+    with open(path, "rb") as f:
         data = pickle.load(f)
     return data
 
