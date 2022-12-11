@@ -9,6 +9,7 @@ import cv2
 import albumentations as A
 from torch.utils.data import Dataset
 from shapely.geometry import Polygon
+from custom_augment import augment
 
 
 def cal_distance(x1, y1, x2, y2):
@@ -404,16 +405,19 @@ class SceneTextDataset(Dataset):
             vertices, labels, ignore_under=10, drop_under=1
         )
 
-        image = Image.open(image_fname)
+        # image = Image.open(image_fname)
+        image = cv2.imread(image_fname)
         image, vertices = resize_img(image, vertices, self.image_size)
         image, vertices = adjust_height(image, vertices)
         image, vertices = rotate_img(image, vertices)
         image, vertices = crop_img(image, vertices, labels, self.crop_size)
-
+        """
         if image.mode != "RGB":
             image = image.convert("RGB")
+        """
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image = np.array(image)
-
+        
         funcs = []
         if self.color_jitter:
             funcs.append(A.ColorJitter(0.5, 0.5, 0.5, 0.25))
@@ -423,6 +427,10 @@ class SceneTextDataset(Dataset):
 
         image = transform(image=image)["image"]
         word_bboxes = np.reshape(vertices, (-1, 4, 2))
+
+        transform2=augment()
+        image,word_bboxes=transform2(image,word_bboxes)['image']
+
         roi_mask = generate_roi_mask(image, vertices, labels)
 
         return image, word_bboxes, roi_mask
