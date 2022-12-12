@@ -1,10 +1,7 @@
 import random
 import cv2
 import albumentations as A
-from straug.camera import Contrast, Brightness, JpegCompression
-from straug.weather import Fog, Frost, Shadow
-from straug.blur import GaussianBlur, MotionBlur, ZoomBlur
-from straug.noise import GaussianNoise
+import numpy as np
 
 # class geometry flip,rotate,perspective
 
@@ -21,71 +18,82 @@ class geometry:
 
 class noise:
     def __init__(self):
-        self.transform_list = [
-            GaussianNoise(),
-        ]
+        self.transform = A.OneOf(
+            [
+                A.GaussNoise(p=1),
+            ],
+            p=1,
+        )
 
     def __call__(self, image):
-        transform = random.sample(self.transform_list, 1)
-        return transform(image)
+        return self.transform(image=image)["image"]
 
 
 class blur:
     def __init__(self):
-        self.transform_list = [
-            A.GaussianBlur(p=1),
-            A.MotionBlur(p=1),
-            A.GlassBlur(p=1),
-        ]
+        self.transform = A.OneOf(
+            [
+                A.GaussianBlur(p=1),
+                A.MotionBlur(p=1),
+                A.Defocus(p=1),
+                A.GlassBlur(p=1, max_delta=1, iterations=1),
+            ],
+            p=1,
+        )
 
     def __call__(self, image):
-        transform = random.sample(self.transform_list, 1)
-        return transform(image=image)["image"]
+        return self.transform(image=image)["image"]
 
 
 class weather:
     def __init__(self):
-        self.transform_list = [
-            Fog(),
-            Frost(),
-            Shadow(),
-        ]
+        self.transform = A.OneOf(
+            [
+                A.RandomRain(p=1),
+                # A.RandomSnow(p=1),
+                A.RandomFog(p=1),
+                A.RandomShadow(p=1),
+            ],
+            p=1,
+        )
 
     def __call__(self, image):
-        transform = random.sample(self.transform_list, 1)
-        return transform(image)
+        return self.transform(image=image)["image"]
 
 
 class camera:
     def __init__(self):
-        self.transform_list = A.Compose(
+        self.transform = A.OneOf(
             [
-                A.RandomBrightnessContrast(),
-                A.JpegCompression(),
-            ]
+                A.RandomBrightnessContrast(p=1),
+                A.JpegCompression(p=1),
+            ],
+            p=1,
         )
 
     def __call__(self, image):
-        transform = random.sample(self.transform_list, 1)
-        return transform(image=image)["image"]
+        return self.transform(image=image)["image"]
 
 
 class process:
     def __init__(self):
-        self.transform_list = [
-            A.Posterize(p=1),
-            A.Equalize(p=1),
-            A.Solarize(p=1),
-            A.InvertImg(p=1),
-        ]
+        self.transform = A.OneOf(
+            [
+                A.Posterize(p=1),
+                A.Equalize(p=1),
+                A.Solarize(p=1),
+                A.InvertImg(p=1),
+            ],
+            p=1,
+        )
 
     def __call__(self, image):
-        transform = random.sample(self.transform_list, 1)
-        return transform(image=image)["image"]
+        return self.transform(image=image)["image"]
 
 
 class augment:
-    def __init__(self):
+    def __init__(self, img_size):
+        self.img_size = img_size
         # self.geometry = geometry()
         self.blur = blur()
         self.noise = noise()
@@ -93,7 +101,23 @@ class augment:
         self.camera = camera()
         self.process = process()
 
-    def call(self, img, bbox):
+    def _resize(self, img: np.array, annotation):
+        h, w, _ = img.shape
+        size = self.img_size
+        ratio = size / max(h, w)
+        if w > h:
+            img = A.Resize(int(h * ratio), size)(image=img)["image"]
+            # img = img.resize((size, int(h * ratio)), Image.BILINEAR)
+        else:
+            img = A.Resize(size, (int(w * ratio)))(image=img)["image"]
+            # img = img.resize((int(w * ratio), size), Image.BILINEAR)
+        for ann in annotation:
+            for pts in ann:
+                pts[0] *= ratio
+                pts[1] *= ratio
+        return img, annotation
+
+    def __call__(self, img, annotation, label):
         transform_list = random.sample(
             [
                 # self.geometry,
@@ -106,6 +130,18 @@ class augment:
             2,
         )
         for transform in transform_list:
-            img, bbox = transform(img, bbox)
+            print(transform)
+            img = transform(img)
 
-        return dict(image=img, bbox=bbox)
+        img, annotation = self._resize(img, annotation)
+        # geometry적용시 bbox, annotation 변경
+        return dict(img=img, annotation=annotation, label=label)
+
+
+# Rotate
+
+# Perpective
+
+# Distort
+
+#
