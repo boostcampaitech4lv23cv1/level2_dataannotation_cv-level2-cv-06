@@ -4,14 +4,9 @@ import numpy as np
 import streamlit as st
 from pathlib import Path
 import os
-import cv2
-import seaborn as sns
-import matplotlib.pyplot as plt
 from stqdm import stqdm
-
-HOME_PATH = os.path.expanduser("~")
-DATA_DIR_PATH = os.path.join(HOME_PATH, "input/data")
-TESTSET_DIST_PATH = os.path.join("./testset_dist")
+from .plots import *
+import pickle
 
 
 def get_data_dirs():
@@ -29,7 +24,6 @@ def set_image(path):
     """
     df = pd.DataFrame()
     image_ids = []
-    # x1, x2, x3, x4, y1, y2, y3, y4 = [], [], [], [], [], [], [], []
     points = []
     illegal = []
     with Path(path).open(encoding="utf8") as f:
@@ -57,24 +51,6 @@ def read_json(filename):
 
 def dataset_selectbox(key):
     return st.selectbox("Dataset", get_data_dirs(), key=key)
-
-
-def gallery_contents(dataset_dir):
-    data = load_ann(dataset_dir)
-    img_dir_path = os.path.join(DATA_DIR_PATH, dataset_dir, "images")
-    img_list = os.listdir(img_dir_path)
-    img_list = sorted([i for i in os.listdir(img_dir_path) if not i.startswith(".")])
-    img_name = st.selectbox("Image", img_list)
-    img_path = os.path.join(img_dir_path, img_name)
-    img = cv2.imread(img_path)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
-    for _, word_value in data["images"][img_name]["words"].items():
-        pts = np.array(word_value["points"]).astype(int)
-        pts = pts.reshape((-1, 1, 2))
-        img = cv2.polylines(img, [pts], True, (255, 0, 0), 3)
-
-    st.image(img, width=600)
 
 
 def get_box_size(quads):
@@ -157,9 +133,29 @@ def rectify_poly(poly, direction, img_w, img_h):
         return np.stack((h, w), -1)
 
 
-def load_ann(ann_path):
+def save_pkl(data, path):
+    with open(path, "wb") as f:
+        pickle.dump(data, f)
 
+
+def load_pkl(path):
+    with open(path, "rb") as f:
+        data = pickle.load(f)
+    return data
+
+
+def create_directory(path):
+    try:
+        if not os.path.exists(path):
+            os.makedirs(path)
+    except OSError:
+        print("Error: Failed to create the directory")
+
+
+def calc_ann(dataset_path):
+    ann_path = os.path.join(dataset_path, "ufo", "train.json")
     data = read_json(ann_path)
+    df_path = os.path.join(dataset_path, "analysis", "df.pkl")
 
     df = {}
     df["image"] = []
@@ -255,7 +251,19 @@ def load_ann(ann_path):
     data_dict["word_df"] = word_df
     data_dict["hor_aspect_ratio"] = hor_aspect_ratio
     data_dict["ver_aspect_ratio"] = ver_aspect_ratio
+
+    analysis_dir_path = os.path.join(dataset_path, "analysis")
+    create_directory(analysis_dir_path)
+    save_pkl(data_dict, df_path)
     return data_dict
+
+
+def load_ann(dataset_path):
+    df_path = os.path.join(dataset_path, "analysis", "df.pkl")
+    if os.path.isfile(df_path):
+        return load_pkl(df_path)
+    else:
+        return calc_ann(dataset_path)
 
 
 def image_size_dist(data_dict):
@@ -275,7 +283,7 @@ def image_tag_dist(data_dict):
         field="image_tags",
         random_sample=False,
         color="g",
-        rotation=0,
+        rotation=30,
         xlabel="image tag",
         ylabel="Number of image tag",
         title="Image Tag Distribution",
@@ -292,7 +300,7 @@ def word_tag_dist(data_dict):
         field="word_tags",
         random_sample=False,
         color="g",
-        rotation=0,
+        rotation=30,
         xlabel="word tags",
         ylabel="Count of each word tag",
         title="Word tag Distribution",
@@ -335,7 +343,7 @@ def language_dist(data_dict):
         field="language",
         random_sample=False,
         color="g",
-        rotation=0,
+        rotation=30,
         xlabel="language",
         ylabel="Count of each language",
         title="Language Distribution",
@@ -386,85 +394,6 @@ def create_count_df(df, field, index):
     return count_df
 
 
-def plot_count_df(df, field, random_sample, color, rotation, xlabel, ylabel, title):
-    fig, ax = plt.subplots(figsize=(10, 6))
-    if random_sample:
-        df = df.sample(n=50, random_state=1)
-    bars = ax.bar(
-        df[field], df[field + "_count"], color=color, align="center", alpha=0.5
-    )
-    for i, b in enumerate(bars):
-        ax.text(
-            b.get_x() + b.get_width() * (1 / 2),
-            b.get_height() + 0.1,
-            df.iloc[i][field + "_count"],
-            ha="center",
-            fontsize=13,
-        )
-    ax.set_xlabel(xlabel, fontsize=13)
-    ax.set_ylabel(ylabel, fontsize=13)
-    ax.set_title(title, fontsize=20)
-    return fig
-
-
-def plot_dist(df, field, bins, color, xlabel, ylabel, title):
-    sns.set(color_codes=True)
-    fig, ax = plt.subplots(figsize=(18, 6))
-    sns.distplot(df[field], bins=bins, color=color, ax=ax)
-
-    ax.set_xlabel(xlabel, fontsize=13)
-    ax.set_ylabel(ylabel, fontsize=13)
-    ax.set_title(title, fontsize=20)
-    return fig
-
-
-def plot_dist_list(target_list, bins, color, xlabel, ylabel, title):
-    sns.set(color_codes=True)
-    fig, ax = plt.subplots(figsize=(18, 6))
-    sns.distplot(target_list, bins=bins, color=color, ax=ax)
-    ax.set_xlabel(xlabel, fontsize=13)
-    ax.set_ylabel(ylabel, fontsize=13)
-    ax.set_title(title, fontsize=20)
-    return fig
-
-
-def testset_dist_imshow(filename):
-    img = cv2.imread(os.path.join(TESTSET_DIST_PATH, filename))
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    img_shape = img.shape
-    img_height = 1000
-    img = cv2.resize(img, (img_height, int(img_height * img_shape[0] / img_shape[1])))
-    return img
-
-
-def view_dist(data_dict: dict):
-    """
-    data_dict: processed annotation json file
-    render distributions
-    """
-    dist_list = [
-        "image_size_dist",
-        "image_tag_dist",
-        "word_tag_dist",
-        "orientation_dist",
-        "language_dist",
-        "bbox_size_dist",
-        "hor_aspect_ratio_dist",
-        "ver_aspect_ratio_dist",
-    ]
-
-    with st.container():
-        col1, col2 = st.columns(2)
-        col1.header("Testset")
-        col2.header("Trainset")
-
-    for dist_name in dist_list:
-        with st.container():
-            col1, col2 = st.columns(2)
-            col1.image(globals()["testset_dist_imshow"](dist_name + ".png"))
-            col2.pyplot(globals()[dist_name](data_dict))
-
-
 def draw_image(group, dataset_path: str, img_path: str):
     """
     group: grouped df by image id
@@ -487,88 +416,7 @@ def draw_image(group, dataset_path: str, img_path: str):
     return image
 
 
-def view_image(df: pd.DataFrame, dataset_path: str):
-    """ """
-
-    group = df.groupby("image_ids")
-    img_paths = list(group.groups.keys())
-    path_lst = [(idx, path) for idx, path in enumerate(img_paths)]
-
-    col1, col2, col3 = st.columns([1, 8, 1])
-
-    with col2:
-        # 10개 단위로 페이지 쪼개기
-        pages = split_page(path_lst)
-        index, path = st.radio(
-            "choose image",
-            options=pages[st.session_state.page],
-            format_func=lambda x: f"{x[1]}",
-        )
-
-        st.text(f"현재 페이지: {st.session_state.page}")
-
-        page_2_move = st.text_input("page to move")
-
-        try:
-            p = int(page_2_move)
-            if p >= len(pages):
-                st.text(f"페이지 범위를 벗어났습니다 | 페이지 범위: 0~{len(pages)-1}")
-            else:
-                st.button("페이지 이동", on_click=change_page, args=[p])
-        except:
-            st.text("숫자를 입력해주세요")
-
-    with col1:
-        if st.session_state.page == 0:
-            prev_flag = True
-        else:
-            prev_flag = False
-        # 처음으로
-        st.button(
-            "<< first page",
-            on_click=change_page,
-            args=[0],
-            disabled=prev_flag,
-        )
-        st.button(
-            "< prev page",
-            on_click=change_page,
-            args=[st.session_state.page - 1],
-            disabled=prev_flag,
-        )
-
-    with col3:
-        if st.session_state.page == len(pages) - 1:
-            next_flag = True
-        else:
-            next_flag = False
-        # 마지막으로
-        st.button(
-            "last page >>",
-            on_click=change_page,
-            args=[len(pages) - 1],
-            disabled=next_flag,
-        )
-        st.button(
-            "next page >",
-            on_click=change_page,
-            args=[st.session_state.page + 1],
-            disabled=next_flag,
-        )
-
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        st.write(" ")
-
-    with c2:
-        image = draw_image(group, dataset_path, path)
-        st.image(image)
-
-    with c3:
-        st.write(" ")
-
-
-def set_session():
+def set_page_session():
     if "page" not in st.session_state:
         st.session_state.page = 0
 
@@ -589,5 +437,5 @@ def split_page(path_lst: list):
     return page_lst
 
 
-def change_page(page_num: int):
+def change_page_session(page_num: int):
     st.session_state.page = page_num
