@@ -20,7 +20,6 @@ def parse_args():
     parser = ArgumentParser()
 
     # Conventional args
-    # parser.add_argument("--data_dir", default="../input/data/ICDAR17_Korean/images")
     parser.add_argument("--data_dir", default="../input/data/test/images")
     parser.add_argument("--model_dir", default="trained_models")
     parser.add_argument(
@@ -39,28 +38,30 @@ def parse_args():
     return args
 
 
-def do_inference(model, ckpt_fpath, data_dir, input_size, batch_size):
+def do_inference(model, ckpt_fpath, **args):
     model.load_state_dict(torch.load(ckpt_fpath, map_location="cpu"))
     model.eval()
 
     image_fnames, by_sample_bboxes = [], []
 
     images = []
-    for image_fpath in tqdm(os.listdir(data_dir)):
+    for image_fpath in tqdm(os.listdir(args["data_dir"])):
         if "._" in image_fpath:
             continue
         # image_fnames.append(osp.basename(image_fpath))
         image_fnames.append(image_fpath)
         # images.append(cv2.imread(image_fpath)[:, :, ::-1])
-        images.append(cv2.imread(os.path.join(data_dir, image_fpath))[:, :, ::-1])
-        if len(images) == batch_size:
-            by_sample_bboxes.extend(detect(model, images, input_size))
+        images.append(
+            cv2.imread(os.path.join(args["data_dir"], image_fpath))[:, :, ::-1]
+        )
+        if len(images) == args["batch_size"]:
+            by_sample_bboxes.extend(detect(model, images, args["input_size"]))
             images = []
 
     if len(images):
-        by_sample_bboxes.extend(detect(model, images, input_size))
+        by_sample_bboxes.extend(detect(model, images, args["input_size"]))
 
-    ufo_result = dict(images=dict())
+    ufo_result = dict(images={})
     for image_fname, bboxes in zip(image_fnames, by_sample_bboxes):
         words_info = {
             idx: dict(points=bbox.tolist()) for idx, bbox in enumerate(bboxes)
@@ -83,15 +84,9 @@ def main(args):
 
     print("Inference in progress")
 
-    ufo_result = dict(images=dict())
+    ufo_result = dict(images={})
 
-    split_result = do_inference(
-        model,
-        ckpt_fpath,
-        args.data_dir,
-        args.input_size,
-        args.batch_size,
-    )
+    split_result = do_inference(model, ckpt_fpath, **args.__dict__)
     ufo_result["images"].update(split_result["images"])
 
     output_fname = "output.csv"
