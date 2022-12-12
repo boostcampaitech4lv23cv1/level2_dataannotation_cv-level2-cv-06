@@ -75,7 +75,7 @@ def parse_args():
 
 def load_files(args: dict):
     """load files from yaml file that contains the data files you want to load
-
+        and update the args dict
     Args:
         args (dict): parser dicts
     """
