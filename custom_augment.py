@@ -5,6 +5,7 @@ from straug.camera import Contrast, Brightness, JpegCompression
 from straug.weather import Fog, Frost, Shadow
 from straug.blur import GaussianBlur, MotionBlur, ZoomBlur
 from straug.noise import GaussianNoise
+from straug.warp import Distort
 
 # class geometry flip,rotate,perspective
 
@@ -19,18 +20,29 @@ class geometry:
 """
 
 
-class noise:
+class Warp:
+    def __init__(self):
+        self.transform_list = [
+            Distort(),
+        ]
+
+    def __call__(self, image, bbox):
+        transform = random.sample(self.transform_list, 1)
+        return transform(image)
+
+
+class Noise:
     def __init__(self):
         self.transform_list = [
             GaussianNoise(),
         ]
 
-    def __call__(self, image):
+    def __call__(self, image, bbox):
         transform = random.sample(self.transform_list, 1)
         return transform(image)
 
 
-class blur:
+class Blur:
     def __init__(self):
         self.transform_list = [
             A.GaussianBlur(p=1),
@@ -38,12 +50,12 @@ class blur:
             A.GlassBlur(p=1),
         ]
 
-    def __call__(self, image):
+    def __call__(self, image, bbox):
         transform = random.sample(self.transform_list, 1)
         return transform(image=image)["image"]
 
 
-class weather:
+class Weather:
     def __init__(self):
         self.transform_list = [
             Fog(),
@@ -51,26 +63,24 @@ class weather:
             Shadow(),
         ]
 
-    def __call__(self, image):
+    def __call__(self, image, bbox):
         transform = random.sample(self.transform_list, 1)
         return transform(image)
 
 
-class camera:
+class Camera:
     def __init__(self):
-        self.transform_list = A.Compose(
-            [
-                A.RandomBrightnessContrast(),
-                A.JpegCompression(),
-            ]
-        )
+        self.transform_list = [
+            A.RandomBrightnessContrast(),
+            A.ImageCompression(),
+        ]
 
-    def __call__(self, image):
+    def __call__(self, image, bbox):
         transform = random.sample(self.transform_list, 1)
         return transform(image=image)["image"]
 
 
-class process:
+class Process:
     def __init__(self):
         self.transform_list = [
             A.Posterize(p=1),
@@ -79,21 +89,21 @@ class process:
             A.InvertImg(p=1),
         ]
 
-    def __call__(self, image):
+    def __call__(self, image, bbox):
         transform = random.sample(self.transform_list, 1)
         return transform(image=image)["image"]
 
 
-class augment:
+class Augment:
     def __init__(self):
         # self.geometry = geometry()
-        self.blur = blur()
-        self.noise = noise()
-        self.weather = weather()
-        self.camera = camera()
-        self.process = process()
+        self.blur = Blur()
+        self.noise = Noise()
+        self.weather = Weather()
+        self.camera = Camera()
+        self.process = Process()
 
-    def call(self, img, bbox):
+    def __call__(self, img, bbox):
         transform_list = random.sample(
             [
                 # self.geometry,
@@ -106,6 +116,8 @@ class augment:
             2,
         )
         for transform in transform_list:
+            print("$$$$$$$$$$$$$$$$$$")
+            print(transform)
             img, bbox = transform(img, bbox)
 
         return dict(image=img, bbox=bbox)
