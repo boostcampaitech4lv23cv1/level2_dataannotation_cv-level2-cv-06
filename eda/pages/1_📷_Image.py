@@ -2,13 +2,12 @@ import streamlit as st
 
 import os
 from typing import List
-from utils import *
-from view import *
+from tools.utils import *
+from tools.view import *
 
 st.set_page_config(
     page_title="Image Viewer",
     page_icon="📷",
-    # layout="wide",
 )
 
 with st.sidebar:
@@ -16,7 +15,9 @@ with st.sidebar:
 
     dataset_path = os.path.join(
         DATA_DIR_PATH,
-        st.selectbox("Dataset Selection", datasets, on_change=change_page, args=[0]),
+        st.selectbox(
+            "Select Dataset", datasets, on_change=change_page_session, args=[0]
+        ),
     )
     if "test" == dataset_path:
         ann_path = os.path.join(DATA_DIR_PATH, dataset_path, "ufo/output.json")
@@ -24,7 +25,6 @@ with st.sidebar:
         ann_path = os.path.join(DATA_DIR_PATH, dataset_path, "ufo/train.json")
 
     df = set_image(ann_path)
-    set_session()
+    set_page_session()
     group, dataset_path, path = view_img_selector(df, dataset_path)
-
 view_image(group, dataset_path, path)

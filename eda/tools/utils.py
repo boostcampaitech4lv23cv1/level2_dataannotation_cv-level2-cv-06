@@ -5,7 +5,7 @@ import streamlit as st
 from pathlib import Path
 import os
 from stqdm import stqdm
-from plots import *
+from .plots import *
 import pickle
 
 
@@ -24,7 +24,6 @@ def set_image(path):
     """
     df = pd.DataFrame()
     image_ids = []
-    # x1, x2, x3, x4, y1, y2, y3, y4 = [], [], [], [], [], [], [], []
     points = []
     illegal = []
     with Path(path).open(encoding="utf8") as f:
@@ -284,7 +283,7 @@ def image_tag_dist(data_dict):
         field="image_tags",
         random_sample=False,
         color="g",
-        rotation=0,
+        rotation=30,
         xlabel="image tag",
         ylabel="Number of image tag",
         title="Image Tag Distribution",
@@ -301,7 +300,7 @@ def word_tag_dist(data_dict):
         field="word_tags",
         random_sample=False,
         color="g",
-        rotation=0,
+        rotation=30,
         xlabel="word tags",
         ylabel="Count of each word tag",
         title="Word tag Distribution",
@@ -344,7 +343,7 @@ def language_dist(data_dict):
         field="language",
         random_sample=False,
         color="g",
-        rotation=0,
+        rotation=30,
         xlabel="language",
         ylabel="Count of each language",
         title="Language Distribution",
@@ -417,7 +416,7 @@ def draw_image(group, dataset_path: str, img_path: str):
     return image
 
 
-def set_session():
+def set_page_session():
     if "page" not in st.session_state:
         st.session_state.page = 0
 
@@ -438,5 +437,5 @@ def split_page(path_lst: list):
     return page_lst
 
 
-def change_page(page_num: int):
+def change_page_session(page_num: int):
     st.session_state.page = page_num

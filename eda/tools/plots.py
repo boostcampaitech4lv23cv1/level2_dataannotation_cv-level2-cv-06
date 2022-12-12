@@ -1,17 +1,29 @@
 # from utils import *
 import matplotlib.pyplot as plt
+import matplotlib
 import seaborn as sns
 import cv2
 import os
 import streamlit as st
-import matplotlib
+import pandas as pd
 
 HOME_PATH = os.path.expanduser("~")
 DATA_DIR_PATH = os.path.join(HOME_PATH, "input/data")
 TESTSET_DIST_PATH = os.path.join("./testset_dist")
 
+
 @st.cache(hash_funcs={matplotlib.figure.Figure: lambda _: None})
-def plot_count_df(df, field, random_sample, color, rotation, xlabel, ylabel, title):
+def plot_count_df(
+    df: pd.DataFrame,
+    field: str,
+    random_sample: bool,
+    color: str,
+    rotation: float,
+    xlabel: str,
+    ylabel: str,
+    title: str,
+):
+    """ """
     fig, ax = plt.subplots(figsize=(10, 6))
     if random_sample:
         df = df.sample(n=50, random_state=1)
@@ -26,10 +38,11 @@ def plot_count_df(df, field, random_sample, color, rotation, xlabel, ylabel, tit
             ha="center",
             fontsize=13,
         )
-    ax.set_xlabel(xlabel, fontsize=13)
+    ax.set_xlabel(xlabel, fontsize=13, rotation=rotation)
     ax.set_ylabel(ylabel, fontsize=13)
     ax.set_title(title, fontsize=20)
     return fig
+
 
 @st.cache(hash_funcs={matplotlib.figure.Figure: lambda _: None})
 def plot_dist(df, field, bins, color, xlabel, ylabel, title):
@@ -42,6 +55,7 @@ def plot_dist(df, field, bins, color, xlabel, ylabel, title):
     ax.set_title(title, fontsize=20)
     return fig
 
+
 @st.cache(hash_funcs={matplotlib.figure.Figure: lambda _: None})
 def plot_dist_list(target_list, bins, color, xlabel, ylabel, title):
     sns.set(color_codes=True)
@@ -51,6 +65,7 @@ def plot_dist_list(target_list, bins, color, xlabel, ylabel, title):
     ax.set_ylabel(ylabel, fontsize=13)
     ax.set_title(title, fontsize=20)
     return fig
+
 
 @st.cache
 def testset_dist_imshow(filename):

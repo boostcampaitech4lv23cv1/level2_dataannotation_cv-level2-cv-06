@@ -2,8 +2,8 @@ import streamlit as st
 
 import os
 from typing import List
-from utils import *
-from view import *
+from tools.utils import *
+from tools.view import *
 
 st.set_page_config(
     page_title="Chart Viewer",
@@ -16,7 +16,9 @@ with st.sidebar:
 
     dataset_path = os.path.join(
         DATA_DIR_PATH,
-        st.selectbox("Dataset Selection", datasets, on_change=change_page, args=[0]),
+        st.selectbox(
+            "Select Dataset", datasets, on_change=change_page_session, args=[0]
+        ),
     )
     if "test" == dataset_path:
         ann_path = os.path.join(DATA_DIR_PATH, dataset_path, "ufo/output.json")
@@ -24,6 +26,5 @@ with st.sidebar:
         ann_path = os.path.join(DATA_DIR_PATH, dataset_path, "ufo/train.json")
 
     data_dict = load_ann(dataset_path)
-    # view_dist_chkbox(data_dict)
-    view_dist_multiselect(data_dict)
-view_dist(data_dict)
+    dist_list = view_dist_multiselect(data_dict)
+view_dist(data_dict, dist_list)
