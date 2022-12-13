@@ -2,11 +2,8 @@ import os.path as osp
 import math
 import json
 from PIL import Image
-
-import torch
 import numpy as np
 import cv2
-import albumentations as A
 from torch.utils.data import Dataset
 from shapely.geometry import Polygon
 from custom_augment import Augment
@@ -404,28 +401,15 @@ class SceneTextDataset(Dataset):
             labels, dtype=np.int64
         )
 
-        vertices, labels = filter_vertices(
-            vertices, labels, ignore_under=10, drop_under=1
-        )
+        vertices, labels = filter_vertices(vertices, labels, 10, 1)
 
-        # image = Image.open(image_fname)
         image = cv2.imread(image_fname)
-
-        # image, vertices = resize_img(image, vertices, self.image_size)
-        # image, vertices = adjust_height(image, vertices)
-        # image, vertices = rotate_img(image, vertices)
-        # image, vertices = crop_img(image, vertices, labels, self.crop_size)
-        # if image.mode != "RGB":
-        #     image = image.convert("RGB")
-
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
         transform = Augment(self.image_size, self.crop_size)
         word_bboxes = np.reshape(vertices, (-1, 4, 2))
 
-        polygons = []
-        for (bbox, label) in zip(word_bboxes, labels):
-            polygons.append(ia.Polygon(bbox, label=label))
+        polygons = [ia.Polygon(bbox, label) for bbox, label in zip(word_bboxes, labels)]
 
         try:
             res = transform(image=image, polygons=polygons)
@@ -434,9 +418,8 @@ class SceneTextDataset(Dataset):
             labels = res["labels"]
 
             roi_mask = generate_roi_mask(image, word_bboxes, labels)
-        except:
+        except Exception:
             with open("error.txt", "a") as f:
                 f.write(f"{image_fname}\n")
 
-        bboxes = [np.asarray(bbox) for bbox in word_bboxes]
-        return image, np.asarray(bboxes), roi_mask
+        return image, word_bboxes, roi_mask
