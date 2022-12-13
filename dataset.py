@@ -430,6 +430,6 @@ class SceneTextDataset(Dataset):
         word_bboxes = np.array(res["bboxes"])
         labels = res["labels"]
 
-        roi_mask = generate_roi_mask(image, vertices, labels)
-
+        roi_mask = generate_roi_mask(image, word_bboxes, labels)
+        print(word_bboxes)
         return image, word_bboxes, roi_mask

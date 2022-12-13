@@ -32,7 +32,7 @@ def parse_args():
     )
 
     parser.add_argument("--device", default="cuda" if cuda.is_available() else "cpu")
-    parser.add_argument("--num_workers", type=int, default=4)
+    parser.add_argument("--num_workers", type=int, default=6)
 
     parser.add_argument("--image_size", type=int, default=1024)
     parser.add_argument("--input_size", type=int, default=512)
