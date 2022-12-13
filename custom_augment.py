@@ -25,9 +25,8 @@ class Geometry:
                 iaa.Flipud(),
                 iaa.Sequential([iaa.Fliplr(), iaa.Flipud()]),
                 iaa.PerspectiveTransform(),
-                iaa.PiecewiseAffine(scale=(0.01, 0.05)),  # distort
-                iaa.WithPolarWarping(iaa.CropAndPad(percent=(-0.1, 0.1))),  # curve
                 iaa.Rotate((1, 359)),
+                iaa.ElasticTransformation(),
             ]
         )
 
