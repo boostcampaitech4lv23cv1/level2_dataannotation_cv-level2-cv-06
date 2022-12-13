@@ -5,6 +5,7 @@ import random
 import imgaug.augmenters as iaa
 from imgaug.augmentables.polys import PolygonsOnImage
 import cv2
+import imgaug as ia
 
 
 class Warp:
@@ -98,7 +99,7 @@ class Camera:
             )
             return transform(image=image)["image"], polygons
         else:
-            transform = iaa.imgcorrupt.Pixelate()
+            transform = iaa.imgcorruptlike.Pixelate()
             return transform(image=image, polygons=polygons)
 
 
@@ -183,13 +184,6 @@ class Augment:
 
         erase_list = []
         for i, (poly, label) in enumerate(zip(polygons, labels)):
-            out = False
-            for pts in poly:
-                if pts[0] >= w or pts[0] < 0 or pts[1] >= h or pts[1] < 0:
-                    out = True
-                    break
-
-        for (poly, label) in zip(polygons[:], labels[:]):
             out = any(
                 pts[0] >= w or pts[0] < 0 or pts[1] >= h or pts[1] < 0 for pts in poly
             )
@@ -223,15 +217,9 @@ class Augment:
         # resize
         image, polygons = self.resize(image, polygons)
 
-        for transform in transform_list:
-            if transform in [self.geometry, self.warp]:
-                image, polygons = transform(image, polygons)
-            else:
-                image = transform(image)
-
         # 2 randomsample
         for transform in transform_list:
-            image = transform(image)
+            image, polygons = transform(image, polygons)
         # crop
         image, polygons = self.crop(image, polygons)
         image, bboxes, labels = self.masking_image(image, polygons)
