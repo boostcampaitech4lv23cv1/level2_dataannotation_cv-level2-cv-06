@@ -182,8 +182,12 @@ class Augment:
 
         erase_list = []
         for i, (poly, label) in enumerate(zip(polygons, labels)):
-            out = any(
-                pts[0] >= w or pts[0] < 0 or pts[1] >= h or pts[1] < 0 for pts in poly
+            out = (
+                any(
+                    pts[0] >= w or pts[0] < 0 or pts[1] >= h or pts[1] < 0
+                    for pts in poly
+                )
+                or len(poly) != 4
             )
 
             if out:

@@ -19,6 +19,9 @@ import builtins
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data.distributed import DistributedSampler as DistributedSampler
 import yaml
+import warnings
+
+warnings.filterwarnings(action="ignore")
 
 
 def parse_args():

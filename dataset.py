@@ -331,9 +331,10 @@ def rotate_img(img, vertices, angle_range=10):
 
 
 def generate_roi_mask(image, vertices, labels):
+
     mask = np.ones(image.shape[:2], dtype=np.float32)
     ignored_polys = [
-        np.around(vertice.reshape((4, 2))).astype(np.int32)
+        np.around(np.reshape(vertice, (4, 2))).astype(np.int32)
         for vertice, label in zip(vertices, labels)
         if label == 0
     ]
@@ -396,8 +397,9 @@ class SceneTextDataset(Dataset):
         for word_info in self.anno["images"][image_fname.split("/")[-1]][
             "words"
         ].values():
-            vertices.append(np.array(word_info["points"]).flatten())
-            labels.append(int(not word_info["illegibility"]))
+            if len(word_info["points"]) == 4:
+                vertices.append(np.array(word_info["points"]).flatten())
+                labels.append(int(not word_info["illegibility"]))
         vertices, labels = np.array(vertices, dtype=np.float32), np.array(
             labels, dtype=np.int64
         )
@@ -425,11 +427,16 @@ class SceneTextDataset(Dataset):
         for (bbox, label) in zip(word_bboxes, labels):
             polygons.append(ia.Polygon(bbox, label=label))
 
-        res = transform(image=image, polygons=polygons)
-        image = res["image"]
-        word_bboxes = np.array(res["bboxes"])
-        labels = res["labels"]
+        try:
+            res = transform(image=image, polygons=polygons)
+            image = res["image"]
+            word_bboxes = np.asarray(res["bboxes"])
+            labels = res["labels"]
 
-        roi_mask = generate_roi_mask(image, word_bboxes, labels)
-        print(word_bboxes)
-        return image, word_bboxes, roi_mask
+            roi_mask = generate_roi_mask(image, word_bboxes, labels)
+        except:
+            with open("error.txt", "a") as f:
+                f.write(f"{image_fname}\n")
+
+        bboxes = [np.asarray(bbox) for bbox in word_bboxes]
+        return image, np.asarray(bboxes), roi_mask
