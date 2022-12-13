@@ -180,7 +180,7 @@ class Augment:
     def masking_image(self, img, polygons):
         polygons, labels = self.poly_to_list(polygons)
         h, w, _ = img.shape
-<<<<<<< HEAD
+
         erase_list = []
         for i, (poly, label) in enumerate(zip(polygons, labels)):
             out = False
@@ -188,13 +188,12 @@ class Augment:
                 if pts[0] >= w or pts[0] < 0 or pts[1] >= h or pts[1] < 0:
                     out = True
                     break
-=======
+
         for (poly, label) in zip(polygons[:], labels[:]):
             out = any(
                 pts[0] >= w or pts[0] < 0 or pts[1] >= h or pts[1] < 0 for pts in poly
             )
 
->>>>>>> 4517ffc72b83946c15ba3e74067f65825777c856
             if out:
                 poly_copy = np.array(poly, dtype=np.int32)
                 img = cv2.fillConvexPoly(img, poly_copy, [255, 255, 255])
