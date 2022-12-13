@@ -9,7 +9,8 @@ import cv2
 import albumentations as A
 from torch.utils.data import Dataset
 from shapely.geometry import Polygon
-from custom_augment import augment
+from custom_augment import Augment
+import imgaug as ia
 
 
 def cal_distance(x1, y1, x2, y2):
@@ -407,29 +408,27 @@ class SceneTextDataset(Dataset):
 
         # image = Image.open(image_fname)
         image = cv2.imread(image_fname)
-        image, vertices = resize_img(image, vertices, self.image_size)
-        image, vertices = adjust_height(image, vertices)
-        image, vertices = rotate_img(image, vertices)
-        image, vertices = crop_img(image, vertices, labels, self.crop_size)
-        """
-        if image.mode != "RGB":
-            image = image.convert("RGB")
-        """
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        image = np.array(image)
-        
-        funcs = []
-        if self.color_jitter:
-            funcs.append(A.ColorJitter(0.5, 0.5, 0.5, 0.25))
-        if self.normalize:
-            funcs.append(A.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)))
-        transform = A.Compose(funcs)
 
-        image = transform(image=image)["image"]
+        # image, vertices = resize_img(image, vertices, self.image_size)
+        # image, vertices = adjust_height(image, vertices)
+        # image, vertices = rotate_img(image, vertices)
+        # image, vertices = crop_img(image, vertices, labels, self.crop_size)
+        # if image.mode != "RGB":
+        #     image = image.convert("RGB")
+
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+        transform = Augment(self.image_size, self.crop_size)
         word_bboxes = np.reshape(vertices, (-1, 4, 2))
 
-        transform2=augment()
-        image,word_bboxes=transform2(image,word_bboxes)['image']
+        polygons = []
+        for (bbox, label) in zip(word_bboxes, labels):
+            polygons.append(ia.Polygon(bbox, label=label))
+
+        res = transform(image=image, polygons=polygons)
+        image = res["image"]
+        word_bboxes = np.array(res["bboxes"])
+        labels = res["labels"]
 
         roi_mask = generate_roi_mask(image, vertices, labels)
 
