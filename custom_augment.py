@@ -168,20 +168,19 @@ class Augment:
         polygons = PolygonsOnImage(polygons, shape=image.shape).remove_out_of_image()
         return image, polygons
 
-    def polytolist(self, polygons):
+    def poly_to_list(self, polygons):
         # return list type
         annotations, labels = [], []
         for poly in polygons:
             labels.append(poly.label)
-            anno = []
-            for pts in poly:
-                anno.append(pts.tolist())
+            anno = [pts.tolist() for pts in poly]
             annotations.append(anno)
         return annotations, labels
 
     def masking_image(self, img, polygons):
-        polygons, labels = self.polytolist(polygons)
+        polygons, labels = self.poly_to_list(polygons)
         h, w, _ = img.shape
+<<<<<<< HEAD
         erase_list = []
         for i, (poly, label) in enumerate(zip(polygons, labels)):
             out = False
@@ -189,6 +188,13 @@ class Augment:
                 if pts[0] >= w or pts[0] < 0 or pts[1] >= h or pts[1] < 0:
                     out = True
                     break
+=======
+        for (poly, label) in zip(polygons[:], labels[:]):
+            out = any(
+                pts[0] >= w or pts[0] < 0 or pts[1] >= h or pts[1] < 0 for pts in poly
+            )
+
+>>>>>>> 4517ffc72b83946c15ba3e74067f65825777c856
             if out:
                 poly_copy = np.array(poly, dtype=np.int32)
                 img = cv2.fillConvexPoly(img, poly_copy, [255, 255, 255])
@@ -219,7 +225,7 @@ class Augment:
         image, polygons = self.resize(image, polygons)
 
         for transform in transform_list:
-            if transform == self.geometry or transform == self.warp:
+            if transform in [self.geometry, self.warp]:
                 image, polygons = transform(image, polygons)
             else:
                 image = transform(image)
