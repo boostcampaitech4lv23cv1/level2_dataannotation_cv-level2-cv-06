@@ -91,9 +91,8 @@ class Camera:
         if np.random.uniform(0, 1) > 0.5:
             transform = A.OneOf(
                 [
-                    A.RandomContrast(p=1),
-                    A.RandomBrightness(p=1),
-                    A.JpegCompression(p=1),
+                    A.RandomBrightnessContrast(p=1),
+                    A.ImageCompression(p=1),
                 ],
                 p=1,
             )
