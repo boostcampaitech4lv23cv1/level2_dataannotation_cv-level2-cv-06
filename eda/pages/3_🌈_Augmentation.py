@@ -28,4 +28,7 @@ with st.sidebar:
     df = set_image(ann_path)
     set_page_session()
     group, dataset_path, path = view_img_selector(df, dataset_path)
+    augment = st.checkbox("Augmentation")
+    if augment:
+        st.write("hong")
 view_image(group, dataset_path, path)
