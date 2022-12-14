@@ -2,11 +2,8 @@ import os.path as osp
 import math
 import json
 from PIL import Image
-
-import torch
 import numpy as np
 import cv2
-import albumentations as A
 from torch.utils.data import Dataset
 from shapely.geometry import Polygon
 from custom_augment import Augment
@@ -357,7 +354,7 @@ def filter_vertices(vertices, labels, ignore_under=0, drop_under=0):
         else:
             areas.append(0)
     areas = np.asarray(areas)
-    
+
     if drop_under > 0:
         passed = areas >= drop_under
         new_vertices, new_labels = new_vertices[passed], new_labels[passed]
@@ -421,9 +418,7 @@ class SceneTextDataset(Dataset):
         transform = Augment(self.image_size, self.crop_size)
         word_bboxes = np.reshape(vertices, (-1, 4, 2))
 
-        polygons = []
-        for (bbox, label) in zip(word_bboxes, labels):
-            polygons.append(ia.Polygon(bbox, label=label))
+        polygons = [ia.Polygon(bbox, label) for bbox, label in zip(word_bboxes, labels)]
 
         res = transform(image=image, polygons=polygons)
         image = res["image"]
