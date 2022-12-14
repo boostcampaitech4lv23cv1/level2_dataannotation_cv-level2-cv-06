@@ -160,10 +160,25 @@ class Augment:
             image, polygons = iaa.Resize(
                 {"height": length, "width": int(w * length / h)}
             )(image=image, polygons=polygons)
-
         image, polygons = iaa.CropToFixedSize(length, length)(
             image=image, polygons=polygons
         )
+        cnt = 0
+        while cnt < 1000:
+            img, polygon = iaa.CropToFixedSize(length, length)(
+                image=image, polygons=polygons
+            )
+
+            is_valid = False
+            for poly in polygon:
+                if int(poly.label) == 1:
+                    is_valid = True
+                    break
+            if len(polygon) != 0 and is_valid:
+                image, polygons = img, polygon
+                break
+            cnt += 1
+
         polygons = PolygonsOnImage(polygons, shape=image.shape).remove_out_of_image()
         return image, polygons
 
