@@ -349,9 +349,15 @@ def filter_vertices(vertices, labels, ignore_under=0, drop_under=0):
 
     new_vertices, new_labels = vertices.copy(), labels.copy()
 
-    areas = np.array([Polygon(v.reshape((4, 2))).convex_hull.area for v in vertices])
-    labels[areas < ignore_under] = 0
-
+    areas = []
+    for v in vertices:
+        poly = Polygon(v.reshape((4, 2)))
+        if poly.convex_hull.area == poly.area:
+            areas.append(poly.convex_hull.area)
+        else:
+            areas.append(0)
+    areas = np.asarray(areas)
+    
     if drop_under > 0:
         passed = areas >= drop_under
         new_vertices, new_labels = new_vertices[passed], new_labels[passed]
@@ -405,18 +411,10 @@ class SceneTextDataset(Dataset):
         )
 
         vertices, labels = filter_vertices(
-            vertices, labels, ignore_under=10, drop_under=1
+            vertices, labels, ignore_under=10, drop_under=100
         )
 
-        # image = Image.open(image_fname)
         image = cv2.imread(image_fname)
-
-        # image, vertices = resize_img(image, vertices, self.image_size)
-        # image, vertices = adjust_height(image, vertices)
-        # image, vertices = rotate_img(image, vertices)
-        # image, vertices = crop_img(image, vertices, labels, self.crop_size)
-        # if image.mode != "RGB":
-        #     image = image.convert("RGB")
 
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
@@ -427,16 +425,11 @@ class SceneTextDataset(Dataset):
         for (bbox, label) in zip(word_bboxes, labels):
             polygons.append(ia.Polygon(bbox, label=label))
 
-        try:
-            res = transform(image=image, polygons=polygons)
-            image = res["image"]
-            word_bboxes = np.asarray(res["bboxes"])
-            labels = res["labels"]
+        res = transform(image=image, polygons=polygons)
+        image = res["image"]
+        word_bboxes = np.asarray(res["bboxes"])
+        labels = res["labels"]
 
-            roi_mask = generate_roi_mask(image, word_bboxes, labels)
-        except:
-            with open("error.txt", "a") as f:
-                f.write(f"{image_fname}\n")
+        roi_mask = generate_roi_mask(image, word_bboxes, labels)
 
-        bboxes = [np.asarray(bbox) for bbox in word_bboxes]
-        return image, np.asarray(bboxes), roi_mask
+        return image, word_bboxes, roi_mask

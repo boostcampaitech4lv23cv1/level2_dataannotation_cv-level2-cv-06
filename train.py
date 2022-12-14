@@ -19,6 +19,7 @@ import builtins
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data.distributed import DistributedSampler as DistributedSampler
 import yaml
+
 import warnings
 
 warnings.filterwarnings(action="ignore")
@@ -165,7 +166,7 @@ def do_training(**args):
 
         scheduler.step()
 
-        print(
+        tqdm.write(
             "Mean loss: {:.4f} | Elapsed time: {}".format(
                 epoch_loss / num_batches, timedelta(seconds=time.time() - epoch_start)
             )
