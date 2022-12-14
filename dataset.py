@@ -2,13 +2,12 @@ import os.path as osp
 import math
 import json
 from PIL import Image
-
-import torch
 import numpy as np
 import cv2
-import albumentations as A
 from torch.utils.data import Dataset
 from shapely.geometry import Polygon
+from custom_augment import Augment
+import imgaug as ia
 
 
 def cal_distance(x1, y1, x2, y2):
@@ -329,9 +328,10 @@ def rotate_img(img, vertices, angle_range=10):
 
 
 def generate_roi_mask(image, vertices, labels):
+
     mask = np.ones(image.shape[:2], dtype=np.float32)
     ignored_polys = [
-        np.around(vertice.reshape((4, 2))).astype(np.int32)
+        np.around(np.reshape(vertice, (4, 2))).astype(np.int32)
         for vertice, label in zip(vertices, labels)
         if label == 0
     ]
@@ -394,35 +394,32 @@ class SceneTextDataset(Dataset):
         for word_info in self.anno["images"][image_fname.split("/")[-1]][
             "words"
         ].values():
-            vertices.append(np.array(word_info["points"]).flatten())
-            labels.append(int(not word_info["illegibility"]))
+            if len(word_info["points"]) == 4:
+                vertices.append(np.array(word_info["points"]).flatten())
+                labels.append(int(not word_info["illegibility"]))
         vertices, labels = np.array(vertices, dtype=np.float32), np.array(
             labels, dtype=np.int64
         )
 
-        vertices, labels = filter_vertices(
-            vertices, labels, ignore_under=10, drop_under=1
-        )
+        vertices, labels = filter_vertices(vertices, labels, 10, 1)
 
-        image = Image.open(image_fname)
-        image, vertices = resize_img(image, vertices, self.image_size)
-        image, vertices = adjust_height(image, vertices)
-        image, vertices = rotate_img(image, vertices)
-        image, vertices = crop_img(image, vertices, labels, self.crop_size)
+        image = cv2.imread(image_fname)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-        if image.mode != "RGB":
-            image = image.convert("RGB")
-        image = np.array(image)
-
-        funcs = []
-        if self.color_jitter:
-            funcs.append(A.ColorJitter(0.5, 0.5, 0.5, 0.25))
-        if self.normalize:
-            funcs.append(A.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)))
-        transform = A.Compose(funcs)
-
-        image = transform(image=image)["image"]
+        transform = Augment(self.image_size, self.crop_size)
         word_bboxes = np.reshape(vertices, (-1, 4, 2))
-        roi_mask = generate_roi_mask(image, vertices, labels)
+
+        polygons = [ia.Polygon(bbox, label) for bbox, label in zip(word_bboxes, labels)]
+
+        try:
+            res = transform(image=image, polygons=polygons)
+            image = res["image"]
+            word_bboxes = np.asarray(res["bboxes"])
+            labels = res["labels"]
+
+            roi_mask = generate_roi_mask(image, word_bboxes, labels)
+        except Exception:
+            with open("error.txt", "a") as f:
+                f.write(f"{image_fname}\n")
 
         return image, word_bboxes, roi_mask
