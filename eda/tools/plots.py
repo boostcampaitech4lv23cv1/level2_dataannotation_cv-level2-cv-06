@@ -8,8 +8,8 @@ import streamlit as st
 import pandas as pd
 
 HOME_PATH = os.path.expanduser("~")
-DATA_DIR_PATH = os.path.join(HOME_PATH, "input/data")
-TESTSET_DIST_PATH = os.path.join("./testset_dist")
+DATA_DIR_PATH = os.path.join(HOME_PATH, "input", "data")
+TESTSET_DIST_PATH = os.path.join(".", "testset_dist")
 
 
 @st.cache(hash_funcs={matplotlib.figure.Figure: lambda _: None})

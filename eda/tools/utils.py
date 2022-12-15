@@ -394,15 +394,18 @@ def create_count_df(df, field, index):
     return count_df
 
 
-def draw_image(group, dataset_path: str, img_path: str):
+def draw_image(group, dataset_path: str, img_filename: str):
     """
     group: grouped df by image id
     img_path: image folder path
     return cv2 image with annotation
     """
-    image = cv2.imread(os.path.join(DATA_DIR_PATH, dataset_path, "images", img_path))
+    
+    img_path = os.path.join(DATA_DIR_PATH, dataset_path, "images", img_filename)
+    image = np.fromfile(img_path, np.uint8)
+    image = cv2.imdecode(image, cv2.IMREAD_COLOR)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    bboxes = group.get_group(img_path)
+    bboxes = group.get_group(img_filename)
 
     for _, bbox in bboxes.iterrows():
         pts = np.array(
