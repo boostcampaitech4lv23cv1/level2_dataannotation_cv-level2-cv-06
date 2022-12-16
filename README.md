@@ -3,7 +3,6 @@
 * [Project Summary](#project-summary)
 * [Dataset Info](#project-summary)
 * [Method](#method)
-
 * [Experiments](#experiments)
 * [Result](#result)
 * [Conclusion](#Conclusion)
@@ -15,14 +14,20 @@
 - 2022.12.08 ~ 2022.12.15 19:00
 
 ### 주제
+<img src="https://user-images.githubusercontent.com/83155350/208000638-2462376c-74ff-47ce-9519-735a7df5d49d.png" width="200" height="200"/>
 
 스마트폰으로 카드를 결제하거나, 카메라로 카드를 인식할 경우 자동으로 카드 번호가 입력되는 경우가 있습니다. 또 주차장에 들어가면 차량 번호가 자동으로 인식되는 경우도 흔히 있습니다. 이처럼 OCR (Optimal Character Recognition) 기술은 사람이 직접 쓰거나 이미지 속에 있는 문자를 얻은 다음 이를 컴퓨터가 인식할 수 있도록 하는 기술로, 컴퓨터 비전 분야에서 현재 널리 쓰이는 대표적인 기술 중 하나입니다.
-![image](https://user-images.githubusercontent.com/83155350/208000638-2462376c-74ff-47ce-9519-735a7df5d49d.png)
-OCR task는 글자 검출 (text detection), 글자 인식 (text recognition), 정렬기 (Serializer) 등의 모듈로 이루어져 있습니다. 본 대회는 아래와 같은 특징과 제약 사항이 있습니다.
+OCR task는 글자 검출 (text detection), 글자 인식 (text recognition), 정렬기 (Serializer) 등의 모듈로 이루어져 있습니다.
+
+---
+### 특징 및 제약
 
 - 본 대회에서는 '글자 검출' task 만을 해결
 - Input : 글자가 포함된 전체 이미지
 - Output : bbox 좌표가 포함된 UFO Format
+
+---
+
 ## Dataset Info
 
 > [ICDAR 2017](https://rrc.cvc.uab.es/?ch=8)
@@ -31,11 +36,15 @@ OCR task는 글자 검출 (text detection), 글자 인식 (text recognition), �
 > - image 파일은 input/data/ICDAR17/images 폴더에 저장
 > - ufo 파일은 input/data/ICDAR17/ufo 폴더에 저장
 
+---
+
 ## Method
 
 - [논문](https://arxiv.org/pdf/2108.06949.pdf)을 구현했고 이를 바탕으로 다양한 실험을 진행함
 - 논문 내용은 Scene Text Recognition에 특화된 augmentation기법을 제안함
 - Scene Text Recognition에 특화된 augmentation기법을 구현하고 1~3개 사이의 augmentation그룹에서 각각 하나씩 임의의 augmentation을 적용함
+
+---
 
 ## Data Augmentation Groups
 
@@ -49,6 +58,7 @@ OCR task는 글자 검출 (text detection), 글자 인식 (text recognition), �
 |        | Rotate          | Impulse  | Zoom     | Shadow  |                  | Equalize    |
 |        | Fliplr + Flipud |          |          |         |                  | ColorJitter |
 
+---
 
 ## Experiments
 ### 1) Resize, Random Crop Parameter Search
@@ -86,18 +96,35 @@ OCR task는 글자 검출 (text detection), 글자 인식 (text recognition), �
 - 선택된 각 group에 해당하는 Augmentation 중 하나가 임의로 적용됨
 - Crop시 Annotation이 이미지 영역을 벗어나는 문제가 있어 이를 없애고 그 영역을 흰색으로 마스킹하는 방식을 사용
 
+---
+
 ## Results
 
 * [실험 결과](#1-resize-random-crop-parameter-search), Image_size가 1024, Input_size가 768일 때 F1 score가 0.4978로 가장 높았음
 * ICDAR 2017, 2019 Dataset으로 학습한 모델의 경우 제출 시 F1 score가 기존 최고 score 대비 0.2 이상 상승함
 * 하지만 여기에 다양한 Data Augmentation을 적용한 결과, recall이 0에 근접하여 F1 score도 0.1 이하의 값이 많이 관측됨
 
+---
+
 ## Conclusion
 - 논문을 참고하여, 다양한 Augmentation을 통해 Data-Driven한 방법으로 성능을 개선하고자 함
 - 하지만 Crop과 Augmentation 사용 시 이미지 영역을 벗어나는 Text를 마스킹 처리한 결과, Text를 포함하지 않는 Negative Sample이 지나치게 많아지게 됨
 - 결과적으로, Test Set 이미지에 대한 False Negative가 증가하고 Recall이 매우 낮아진 것으로 보임
+
+---
+
 ## Limitations
 - Test set의 특성을 반영한 Validation set을 구성하지 못하여 Public LB 점수로 모델의 성능을 판단함
 - code의 module화가 되어있지 않아 debugging 시 원인 분석이 어려웠음
 - 논문 내용을 그대로 적용하는 데 집중해서, 본 대회 특성을 고려한 실험을 해보지 못함
   - ex) Crop처럼 특정 Augmentation을 적용하지 않는 실험
+-
+  |       | Original                                              | Transform                                          | Crop                                                | Mask                                                |
+  | ----- | ----------------------------------------------------- | -------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------- |
+  | Case1 | <img src="img/origin1.png" width="100" height="100"/> | <img src="img/aug1.png" width="100" height="100"/> | <img src="img/crop1.png" width="100" height="100"/> | <img src="img/mask1.png" width="100" height="100"/> |
+  | Case2 | <img src="img/origin2.png" width="100" height="100"/> | <img src="img/aug2.png" width="100" height="100"/> | <img src="img/crop2.png" width="100" height="100"/> | <img src="img/mask2.png" width="100" height="100"/> |
+- Crop시 Annotation이 이미지 영역을 벗어나지 않는 경우가 최소 하나 있도록 설계
+   - Annotation이 이미지 영역을 벗어나는 경우는 흰색으로 마스킹 처리
+- 하지만 Case2-Mask처럼 Text가 없는 Sample이 많이 관측되서 설계를 잘 못한 것으로 보임
+
+
