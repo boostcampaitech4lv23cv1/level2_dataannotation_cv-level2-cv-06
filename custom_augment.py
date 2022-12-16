@@ -169,11 +169,7 @@ class Augment:
                 image=image, polygons=polygons
             )
 
-            is_valid = False
-            for poly in polygon:
-                if int(poly.label) == 1:
-                    is_valid = True
-                    break
+            is_valid = any(int(poly.label) == 1 for poly in polygon)
             if len(polygon) != 0 and is_valid:
                 image, polygons = img, polygon
                 break
