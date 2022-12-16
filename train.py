@@ -20,6 +20,10 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data.distributed import DistributedSampler as DistributedSampler
 import yaml
 
+import warnings
+
+warnings.filterwarnings(action="ignore")
+
 
 def parse_args():
     parser = ArgumentParser()
@@ -32,11 +36,11 @@ def parse_args():
     )
 
     parser.add_argument("--device", default="cuda" if cuda.is_available() else "cpu")
-    parser.add_argument("--num_workers", type=int, default=4)
+    parser.add_argument("--num_workers", type=int, default=6)
 
     parser.add_argument("--image_size", type=int, default=1024)
     parser.add_argument("--input_size", type=int, default=512)
-    parser.add_argument("--batch_size", type=int, default=12)
+    parser.add_argument("--batch_size", type=int, default=40)
     parser.add_argument("--learning_rate", type=float, default=1e-3)
     parser.add_argument("--max_epoch", type=int, default=200)
     parser.add_argument("--save_interval", type=int, default=5)
@@ -162,7 +166,7 @@ def do_training(**args):
 
         scheduler.step()
 
-        print(
+        tqdm.write(
             "Mean loss: {:.4f} | Elapsed time: {}".format(
                 epoch_loss / num_batches, timedelta(seconds=time.time() - epoch_start)
             )
