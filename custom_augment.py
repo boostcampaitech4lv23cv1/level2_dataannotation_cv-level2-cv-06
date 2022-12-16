@@ -174,9 +174,8 @@ class Augment:
                 image, polygons = img, polygon
                 break
             cnt += 1
-
         polygons = PolygonsOnImage(polygons, shape=image.shape).remove_out_of_image()
-        return image, polygons
+        return image, polygons.polygons
 
     def poly_to_list(self, polygons):
         # return list type
@@ -226,16 +225,38 @@ class Augment:
             ],
             2,
         )
-
         # resize
-        image, polygons = self.resize(image, polygons)
+        resize_image, resize_polygons = self.resize(image, polygons)
+
+        re_psoi = ia.PolygonsOnImage(resize_polygons, shape=resize_image.shape)
+        re_image_with_polys = re_psoi.draw_on_image(
+            resize_image, alpha_points=0, alpha_face=0.5, color_lines=(255, 0, 0)
+        )
 
         # 2 randomsample
         for transform in transform_list:
-            image, polygons = transform(image, polygons)
-        # crop
-        image, polygons = self.crop(image, polygons)
-        image, bboxes, labels = self.masking_image(image, polygons)
-        # fill
+            trans_image, trans_polygons = transform(resize_image, resize_polygons)
+        trans_psoi = ia.PolygonsOnImage(trans_polygons, shape=trans_image.shape)
+        trans_image_with_polys = trans_psoi.draw_on_image(
+            trans_image, alpha_points=0, alpha_face=0.5, color_lines=(255, 0, 0)
+        )
 
-        return dict(image=image, bboxes=bboxes, labels=labels)
+        # crop
+        crop_image, crop_polygons = self.crop(trans_image, trans_polygons)
+
+        crop_psoi = ia.PolygonsOnImage(crop_polygons, shape=crop_image.shape)
+        crop_image_with_polys = crop_psoi.draw_on_image(
+            crop_image, alpha_points=0, alpha_face=0.5, color_lines=(255, 0, 0)
+        )
+
+        mask_image, bboxes, labels = self.masking_image(crop_image, crop_polygons)
+        # fill
+        if bboxes:
+
+            masked_img = ia.PolygonsOnImage(
+                [ia.Polygon(bbox) for bbox in bboxes], shape=mask_image.shape
+            ).draw_on_image(
+                mask_image, alpha_points=0, alpha_face=0.5, color_lines=(255, 0, 0)
+            )
+
+        return dict(image=mask_image, bboxes=bboxes, labels=labels)
