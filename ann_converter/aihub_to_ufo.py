@@ -8,8 +8,9 @@ DATA_DIR_PATH = os.path.join(HOME_PATH, "input/data")
 
 
 def main(args):
-    images_path = os.path.join(args.dataset_path, 'images')
-    output_dir_path = os.path.join(args.dataset_path, 'ufo')
+    dataset_path = os.path.join(DATA_DIR_PATH, args.dataset_dir)
+    images_path = os.path.join(dataset_path, 'images')
+    output_dir_path = os.path.join(dataset_path, 'ufo')
     output_path = os.path.join(output_dir_path, 'train.json')
     file_data = dict()
     file_data["images"] = dict()
@@ -21,7 +22,7 @@ def main(args):
         tmp = name.split('.')
         tmp[-1] = 'json'
 
-        output_name = name.split('/')[-1]
+        output_name = os.path.split(name)[-1]
 
         json_name = ".".join(tmp).replace('images','legacy_annotations')
 
@@ -82,7 +83,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset_path', '-d', type=str, default=os.path.join(DATA_DIR_PATH, 'AIHub'))
+    parser.add_argument('--dataset_dir', '-d', type=str, default='AIHub')
     args = parser.parse_args()
 
     main(args)
